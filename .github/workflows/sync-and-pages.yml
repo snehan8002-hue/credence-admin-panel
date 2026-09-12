@@ -32,6 +32,7 @@ jobs:
           test -f index.html
           test -f app.js
           test -f notifications.js
+          test -f auth-fix.js
           test -f profile.html
           test -f student-courses.html
           test -f student-videos.html
@@ -42,7 +43,7 @@ jobs:
           test -f admin-media.html
           test -f reset-password.html
           touch .nojekyll
-          echo "Verified complete student app, auth, section pages, media and admin files"
+          echo "Verified complete student app, modern auth, section pages, media and admin files"
       - name: Commit synced files
         run: |
           git config user.name "github-actions[bot]"
