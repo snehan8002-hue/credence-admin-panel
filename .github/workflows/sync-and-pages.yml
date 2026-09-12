@@ -10,6 +10,9 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     if: ${{ github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[sync-admin]') }}
     steps:
       - name: Checkout
@@ -36,4 +39,5 @@ jobs:
         with:
           path: .
       - name: Deploy Pages
+        id: deployment
         uses: actions/deploy-pages@v4
