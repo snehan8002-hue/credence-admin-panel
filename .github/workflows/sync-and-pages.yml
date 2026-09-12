@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
       - name: Preserve Admin Control Center entry page
         run: cp index.html /tmp/credence-admin-index.html
       - name: Copy finished Admin Panel
@@ -28,8 +30,10 @@ jobs:
           rm -rf source
           cp /tmp/credence-admin-index.html index.html
           rm -f admin.html admin.js app.js app-auth-fix.js auth-bridge.js certificates.js checkout.js learning.js notifications.js orders.js profile-settings.js profile.html quiz.html quiz.js smoke-test.html support.html support.js
+          test -f index.html
           test -f reset-password.html
-          echo "Verified reset-password.html is included in the Pages artifact"
+          touch .nojekyll
+          echo "Verified index.html and reset-password.html are included in the Pages artifact"
       - name: Commit synced files
         run: |
           git config user.name "github-actions[bot]"
