@@ -1,1 +1,42 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="0;url=admin-dashboard.html"><title>CREDENCE Admin</title><script>location.replace('admin-dashboard.html');</script></head><body><p>Opening CREDENCE Admin… <a href="admin-dashboard.html">Continue</a></p></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CREDENCE Admin — Control Center</title>
+<style>
+:root{--g:#08783f;--ink:#123126;--muted:#66756e;--bg:#f5f8f6;--line:#dfe9e4}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);font-family:Georgia,serif;color:var(--ink);padding:24px}
+.card{width:min(100%,520px);background:#fff;border:1px solid var(--line);border-radius:28px;padding:42px;box-shadow:0 18px 50px #12312612;text-align:center}
+.logo{font-size:56px;margin-bottom:8px}.brand{font-size:38px;font-weight:900;letter-spacing:2px}.sub{font-size:20px;color:#7a857f;margin:8px 0 32px}
+form{text-align:left}.field{margin:18px 0}.field label{display:block;font-size:17px;font-weight:700;margin-bottom:8px}.field input{width:100%;padding:15px;border:1px solid #d5e1db;border-radius:13px;font:inherit;font-size:17px;outline:none}.field input:focus{border-color:var(--g);box-shadow:0 0 0 3px #08783f18}
+button{width:100%;padding:16px;border:0;border-radius:13px;background:var(--g);color:#fff;font:700 18px Georgia,serif;cursor:pointer;margin-top:8px}button:disabled{opacity:.65}
+.note{margin:22px 0 0;color:var(--muted);font-size:15px;line-height:1.5}.error{display:none;background:#fff0f0;color:#a33;padding:12px;border-radius:11px;margin:14px 0;font-family:system-ui,sans-serif;font-size:14px}.back{display:inline-block;margin-top:20px;color:var(--g);text-decoration:none;font-family:system-ui,sans-serif;font-weight:700}
+@media(max-width:520px){.card{padding:30px 22px}.brand{font-size:31px}.logo{font-size:48px}}
+</style>
+</head>
+<body>
+<main class="card">
+<div class="logo">🔐</div>
+<div class="brand">CREDENCE Admin</div>
+<div class="sub">Control Center</div>
+<div id="error" class="error"></div>
+<form id="loginForm">
+<div class="field"><label for="email">Admin Email</label><input id="email" type="email" autocomplete="username" placeholder="Admin email" required></div>
+<div class="field"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" placeholder="Password" required></div>
+<button id="login" type="submit">Login as Admin</button>
+</form>
+<div class="note">Use the authorized CREDENCE admin/master account.<br>No OTP verification is required for this Admin Panel.</div>
+<a class="back" href="admin-dashboard.html">Open dashboard</a>
+</main>
+<script>
+const URL='https://tasoycsbzceohgjxizdp.supabase.co',KEY='sb_publishable_ZLU-d0ZI-XT_IgabzmigkA_5vohKjLl';
+const $=s=>document.querySelector(s);
+function show(s){const e=$('#error');e.textContent=s;e.style.display='block'}
+function save(s){localStorage.setItem('credence_session',JSON.stringify(s))}
+async function verify(d){const r=await fetch(`${URL}/rest/v1/profiles?select=id,email,full_name,role,active,banned&id=eq.${encodeURIComponent(d.user.id)}&limit=1`,{headers:{apikey:KEY,Authorization:`Bearer ${d.access_token}`}});const p=(await r.json().catch(()=>[]))[0];if(!r.ok||!p)throw Error('Admin profile not found.');if(!['admin','master'].includes(String(p.role||'').toLowerCase()))throw Error('This account is not an admin/master account.');if(p.active===false||p.banned===true)throw Error('This admin account is inactive or banned.');return p}
+(async()=>{try{const s=JSON.parse(localStorage.getItem('credence_session')||'null');if(s?.access_token&&s?.user){try{await verify(s);location.replace('admin-dashboard.html')}catch{localStorage.removeItem('credence_session')}}}catch{}})();
+$('#loginForm').addEventListener('submit',async e=>{e.preventDefault();$('#error').style.display='none';const b=$('#login');b.disabled=true;b.textContent='Signing in…';try{const r=await fetch(`${URL}/auth/v1/token?grant_type=password`,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({email:$('#email').value.trim(),password:$('#password').value})});const d=await r.json().catch(()=>({}));if(!r.ok||!d.access_token)throw Error(d.error_description||d.msg||'Invalid admin email or password.');await verify(d);save(d);location.replace('admin-dashboard.html')}catch(err){show(err.message||'Admin login failed.');b.disabled=false;b.textContent='Login as Admin'}});
+</script>
+</body>
+</html>
