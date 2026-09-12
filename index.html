@@ -10,7 +10,7 @@
 .card{width:min(100%,520px);background:#fff;border:1px solid var(--line);border-radius:28px;padding:42px;box-shadow:0 18px 50px #12312612;text-align:center}
 .logo{font-size:56px;margin-bottom:8px}.brand{font-size:38px;font-weight:900;letter-spacing:2px}.sub{font-size:20px;color:#7a857f;margin:8px 0 32px}
 form{text-align:left}.field{margin:18px 0}.field label{display:block;font-size:17px;font-weight:700;margin-bottom:8px}.field input{width:100%;padding:15px;border:1px solid #d5e1db;border-radius:13px;font:inherit;font-size:17px;outline:none}.field input:focus{border-color:var(--g);box-shadow:0 0 0 3px #08783f18}
-button{width:100%;padding:16px;border:0;border-radius:13px;background:var(--g);color:#fff;font:700 18px Georgia,serif;cursor:pointer;margin-top:8px}button:disabled{opacity:.65}
+button{width:100%;padding:16px;border:0;border-radius:13px;background:var(--g);color:#fff;font:700 18px Georgia,serif;cursor:pointer;margin-top:8px}button:disabled{opacity:.65}.secondary{background:#e7f2ec;color:var(--g)}
 .link{display:block;margin-top:14px;color:var(--g);font:700 15px system-ui,sans-serif;text-decoration:none}.note{margin:22px 0 0;color:var(--muted);font-size:15px;line-height:1.5}.error{display:none;background:#fff0f0;color:#a33;padding:12px;border-radius:11px;margin:14px 0;font-family:system-ui,sans-serif;font-size:14px}.success{display:none;background:#e9f7ef;color:#17623d;padding:12px;border-radius:11px;margin:14px 0;font-family:system-ui,sans-serif;font-size:14px}
 .badge{display:inline-block;margin-top:18px;padding:7px 12px;border-radius:99px;background:#e7f2ec;color:var(--g);font:700 12px system-ui,sans-serif}
 @media(max-width:520px){.card{padding:30px 22px}.brand{font-size:31px}.logo{font-size:48px}}
@@ -18,28 +18,31 @@ button{width:100%;padding:16px;border:0;border-radius:13px;background:var(--g);c
 </head>
 <body>
 <main class="card">
-<div class="logo">🔐</div>
-<div class="brand">CREDENCE Admin</div>
-<div class="sub">Private Control Center</div>
+<div class="logo">🔐</div><div class="brand">CREDENCE Admin</div><div class="sub">Private Control Center</div>
 <div id="error" class="error"></div><div id="success" class="success"></div>
 <form id="loginForm">
 <div class="field"><label for="email">Admin Email</label><input id="email" type="email" autocomplete="username" placeholder="Admin email" required></div>
-<div class="field"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" placeholder="Password" required></div>
+<div id="passwordField" class="field"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" placeholder="Password"></div>
+<div id="otpField" class="field" hidden><label for="otp">Email OTP</label><input id="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code"></div>
 <button id="login" type="submit">Login as Admin</button>
+<button id="otpButton" type="button" class="secondary">Send Email OTP</button>
 </form>
-<a class="link" href="reset-password.html?v=3">Forgot admin password?</a>
-<div class="note">This area is private to authorized CREDENCE <b>admin</b> and <b>master</b> accounts.<br>Student accounts cannot enter the Control Center.</div>
+<a class="link" href="reset-password.html?v=4">Forgot admin password?</a>
+<div class="note">Private to authorized CREDENCE <b>admin</b> and <b>master</b> accounts.<br>Student accounts cannot enter the Control Center.</div>
 <div class="badge">PRIVATE • ADMIN / MASTER ONLY</div>
 </main>
 <script>
 const URL='https://tasoycsbzceohgjxizdp.supabase.co',KEY='sb_publishable_ZLU-d0ZI-XT_IgabzmigkA_5vohKjLl';
-const $=s=>document.querySelector(s);
-function show(s){const e=$('#error');e.textContent=s;e.style.display='block';$('#success').style.display='none'}
+const $=s=>document.querySelector(s);let otpMode=false;
+function showError(s){const e=$('#error');e.textContent=s;e.style.display='block';$('#success').style.display='none'}
+function showSuccess(s){const e=$('#success');e.textContent=s;e.style.display='block';$('#error').style.display='none'}
 function save(s){localStorage.setItem('credence_session',JSON.stringify(s))}
 async function verify(d){const r=await fetch(`${URL}/rest/v1/profiles?select=id,email,full_name,role,active,banned&id=eq.${encodeURIComponent(d.user.id)}&limit=1`,{headers:{apikey:KEY,Authorization:`Bearer ${d.access_token}`}});const p=(await r.json().catch(()=>[]))[0];if(!r.ok||!p)throw Error('This account is not authorized for the CREDENCE Control Center.');const role=String(p.role||'').toLowerCase();if(!['admin','master'].includes(role))throw Error('Access denied. This is a Student account, not an Admin/Master account.');if(p.active===false||p.banned===true)throw Error('This Admin/Master account is inactive or banned.');return p}
+async function sendOtp(){const email=$('#email').value.trim().toLowerCase();if(email!=='snehan8002@gmail.com')return showError('Admin OTP is enabled for the authorized CREDENCE admin email only.');const b=$('#otpButton');b.disabled=true;b.textContent='Sending…';try{const r=await fetch(`${URL}/auth/v1/otp`,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({email,create_user:true,data:{full_name:'Snehan'}})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.msg||d.message||'Could not send admin OTP.');otpMode=true;$('#otpField').hidden=false;$('#passwordField').hidden=true;$('#login').textContent='Verify OTP';showSuccess('OTP sent to the admin email. Enter the 6-digit code.')}catch(e){showError(e.message||'Could not send admin OTP.')}finally{b.disabled=false;b.textContent='Resend Email OTP'}}
+$('#otpButton').onclick=sendOtp;
+$('#loginForm').addEventListener('submit',async e=>{e.preventDefault();$('#error').style.display='none';const b=$('#login');b.disabled=true;b.textContent=otpMode?'Verifying…':'Signing in…';try{const email=$('#email').value.trim().toLowerCase();let d;if(otpMode){const token=$('#otp').value.trim();if(!/^\d{6}$/.test(token))throw Error('Enter the 6-digit OTP.');const r=await fetch(`${URL}/auth/v1/verify`,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({type:'email',email,token})});d=await r.json().catch(()=>({}));if(!r.ok||!d.access_token)throw Error(d.msg||d.message||'Invalid or expired OTP.')}else{const password=$('#password').value;const r=await fetch(`${URL}/auth/v1/token?grant_type=password`,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password})});d=await r.json().catch(()=>({}));if(!r.ok||!d.access_token)throw Error('Invalid email or password. Use an authorized Admin/Master account.')}await verify(d);save(d);location.replace('admin-dashboard.html')}catch(err){showError(err.message||'Admin login failed.');b.disabled=false;b.textContent=otpMode?'Verify OTP':'Login as Admin'}});
 (async()=>{try{const s=JSON.parse(localStorage.getItem('credence_session')||'null');if(s?.access_token&&s?.user){try{await verify(s);location.replace('admin-dashboard.html')}catch{localStorage.removeItem('credence_session')}}}catch{}})();
-$('#loginForm').addEventListener('submit',async e=>{e.preventDefault();$('#error').style.display='none';const b=$('#login');b.disabled=true;b.textContent='Signing in…';try{const email=$('#email').value.trim().toLowerCase(),password=$('#password').value;const r=await fetch(`${URL}/auth/v1/token?grant_type=password`,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password})});const d=await r.json().catch(()=>({}));if(!r.ok||!d.access_token)throw Error('Invalid email or password. Use the password for an authorized Admin/Master account.');await verify(d);save(d);location.replace('admin-dashboard.html')}catch(err){show(err.message||'Admin login failed.');b.disabled=false;b.textContent='Login as Admin'}});
 </script>
 </body>
 </html>
-<!-- Trigger Student section pages deployment: 2026-09-12 -->
+<!-- Admin OTP bootstrap + complete Student sync -->
