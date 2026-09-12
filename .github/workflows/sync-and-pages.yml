@@ -21,7 +21,7 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Preserve Admin Control Center entry page
         run: cp index.html /tmp/credence-admin-index.html
-      - name: Copy finished Admin Panel
+      - name: Copy complete CREDENCE app and Admin Panel
         run: |
           git clone --depth 1 --branch credence-admin-publish https://github.com/snehan8002-hue/credence-admin.git source
           rm -rf source/.git source/README.md
@@ -29,17 +29,26 @@ jobs:
           cp -R source/. .
           rm -rf source
           cp /tmp/credence-admin-index.html index.html
-          rm -f admin.html admin.js app.js app-auth-fix.js auth-bridge.js certificates.js checkout.js learning.js notifications.js orders.js profile-settings.js profile.html quiz.html quiz.js smoke-test.html support.html support.js
           test -f index.html
+          test -f app.js
+          test -f notifications.js
+          test -f profile.html
+          test -f student-courses.html
+          test -f student-videos.html
+          test -f student-quizzes.html
+          test -f student-tests.html
+          test -f student-fees.html
+          test -f student-reset-password.html
+          test -f admin-media.html
           test -f reset-password.html
           touch .nojekyll
-          echo "Verified index.html and reset-password.html are included in the Pages artifact"
+          echo "Verified complete student app, auth, section pages, media and admin files"
       - name: Commit synced files
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          if git diff --cached --quiet; then echo "No file changes"; else git commit -m "Sync finished CREDENCE Admin Panel [sync-admin]"; git push; fi
+          if git diff --cached --quiet; then echo "No file changes"; else git commit -m "Sync complete CREDENCE app and Admin Panel [sync-admin]"; git push; fi
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
