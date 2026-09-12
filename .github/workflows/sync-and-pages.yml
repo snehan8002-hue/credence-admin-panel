@@ -28,6 +28,8 @@ jobs:
           rm -rf source
           cp /tmp/credence-admin-index.html index.html
           rm -f admin.html admin.js app.js app-auth-fix.js auth-bridge.js certificates.js checkout.js learning.js notifications.js orders.js profile-settings.js profile.html quiz.html quiz.js smoke-test.html support.html support.js
+          test -f reset-password.html
+          echo "Verified reset-password.html is included in the Pages artifact"
       - name: Commit synced files
         run: |
           git config user.name "github-actions[bot]"
