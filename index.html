@@ -11,7 +11,7 @@
 .logo{font-size:56px;margin-bottom:8px}.brand{font-size:38px;font-weight:900;letter-spacing:2px}.sub{font-size:20px;color:#7a857f;margin:8px 0 32px}
 form{text-align:left}.field{margin:18px 0}.field label{display:block;font-size:17px;font-weight:700;margin-bottom:8px}.field input{width:100%;padding:15px;border:1px solid #d5e1db;border-radius:13px;font:inherit;font-size:17px;outline:none}.field input:focus{border-color:var(--g);box-shadow:0 0 0 3px #08783f18}
 button{width:100%;padding:16px;border:0;border-radius:13px;background:var(--g);color:#fff;font:700 18px Georgia,serif;cursor:pointer;margin-top:8px}button:disabled{opacity:.65}
-.note{margin:22px 0 0;color:var(--muted);font-size:15px;line-height:1.5}.error{display:none;background:#fff0f0;color:#a33;padding:12px;border-radius:11px;margin:14px 0;font-family:system-ui,sans-serif;font-size:14px}
+.link{display:block;margin-top:14px;color:var(--g);font:700 15px system-ui,sans-serif;text-decoration:none}.note{margin:22px 0 0;color:var(--muted);font-size:15px;line-height:1.5}.error{display:none;background:#fff0f0;color:#a33;padding:12px;border-radius:11px;margin:14px 0;font-family:system-ui,sans-serif;font-size:14px}.success{display:none;background:#e9f7ef;color:#17623d;padding:12px;border-radius:11px;margin:14px 0;font-family:system-ui,sans-serif;font-size:14px}
 .badge{display:inline-block;margin-top:18px;padding:7px 12px;border-radius:99px;background:#e7f2ec;color:var(--g);font:700 12px system-ui,sans-serif}
 @media(max-width:520px){.card{padding:30px 22px}.brand{font-size:31px}.logo{font-size:48px}}
 </style>
@@ -21,40 +21,24 @@ button{width:100%;padding:16px;border:0;border-radius:13px;background:var(--g);c
 <div class="logo">🔐</div>
 <div class="brand">CREDENCE Admin</div>
 <div class="sub">Private Control Center</div>
-<div id="error" class="error"></div>
+<div id="error" class="error"></div><div id="success" class="success"></div>
 <form id="loginForm">
 <div class="field"><label for="email">Admin Email</label><input id="email" type="email" autocomplete="username" placeholder="Admin email" required></div>
 <div class="field"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" placeholder="Password" required></div>
 <button id="login" type="submit">Login as Admin</button>
 </form>
+<a class="link" href="reset-password.html">Forgot admin password?</a>
 <div class="note">This area is private to authorized CREDENCE <b>admin</b> and <b>master</b> accounts.<br>Student accounts cannot enter the Control Center.</div>
 <div class="badge">PRIVATE • ADMIN / MASTER ONLY</div>
 </main>
 <script>
 const URL='https://tasoycsbzceohgjxizdp.supabase.co',KEY='sb_publishable_ZLU-d0ZI-XT_IgabzmigkA_5vohKjLl';
 const $=s=>document.querySelector(s);
-function show(s){const e=$('#error');e.textContent=s;e.style.display='block'}
+function show(s){const e=$('#error');e.textContent=s;e.style.display='block';$('#success').style.display='none'}
 function save(s){localStorage.setItem('credence_session',JSON.stringify(s))}
-async function verify(d){
-  const r=await fetch(`${URL}/rest/v1/profiles?select=id,email,full_name,role,active,banned&id=eq.${encodeURIComponent(d.user.id)}&limit=1`,{headers:{apikey:KEY,Authorization:`Bearer ${d.access_token}`}});
-  const p=(await r.json().catch(()=>[]))[0];
-  if(!r.ok||!p)throw Error('This account is not authorized for the CREDENCE Control Center.');
-  const role=String(p.role||'').toLowerCase();
-  if(!['admin','master'].includes(role))throw Error('Access denied. This is a Student account, not an Admin/Master account.');
-  if(p.active===false||p.banned===true)throw Error('This Admin/Master account is inactive or banned.');
-  return p
-}
+async function verify(d){const r=await fetch(`${URL}/rest/v1/profiles?select=id,email,full_name,role,active,banned&id=eq.${encodeURIComponent(d.user.id)}&limit=1`,{headers:{apikey:KEY,Authorization:`Bearer ${d.access_token}`}});const p=(await r.json().catch(()=>[]))[0];if(!r.ok||!p)throw Error('This account is not authorized for the CREDENCE Control Center.');const role=String(p.role||'').toLowerCase();if(!['admin','master'].includes(role))throw Error('Access denied. This is a Student account, not an Admin/Master account.');if(p.active===false||p.banned===true)throw Error('This Admin/Master account is inactive or banned.');return p}
 (async()=>{try{const s=JSON.parse(localStorage.getItem('credence_session')||'null');if(s?.access_token&&s?.user){try{await verify(s);location.replace('admin-dashboard.html')}catch{localStorage.removeItem('credence_session')}}}catch{}})();
-$('#loginForm').addEventListener('submit',async e=>{
-  e.preventDefault();$('#error').style.display='none';const b=$('#login');b.disabled=true;b.textContent='Signing in…';
-  try{
-    const email=$('#email').value.trim().toLowerCase(),password=$('#password').value;
-    const r=await fetch(`${URL}/auth/v1/token?grant_type=password`,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password})});
-    const d=await r.json().catch(()=>({}));
-    if(!r.ok||!d.access_token)throw Error('Invalid email or password. Use the password for an authorized Admin/Master account.');
-    await verify(d);save(d);location.replace('admin-dashboard.html');
-  }catch(err){show(err.message||'Admin login failed.');b.disabled=false;b.textContent='Login as Admin'}
-});
+$('#loginForm').addEventListener('submit',async e=>{e.preventDefault();$('#error').style.display='none';const b=$('#login');b.disabled=true;b.textContent='Signing in…';try{const email=$('#email').value.trim().toLowerCase(),password=$('#password').value;const r=await fetch(`${URL}/auth/v1/token?grant_type=password`,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password})});const d=await r.json().catch(()=>({}));if(!r.ok||!d.access_token)throw Error('Invalid email or password. Use the password for an authorized Admin/Master account.');await verify(d);save(d);location.replace('admin-dashboard.html')}catch(err){show(err.message||'Admin login failed.');b.disabled=false;b.textContent='Login as Admin'}});
 </script>
 </body>
 </html>
