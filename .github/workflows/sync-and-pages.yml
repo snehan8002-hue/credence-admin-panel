@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Preserve Admin Control Center entry page
+        run: cp index.html /tmp/credence-admin-index.html
       - name: Copy finished Admin Panel
         run: |
           git clone --depth 1 --branch credence-admin-publish https://github.com/snehan8002-hue/credence-admin.git source
@@ -21,9 +23,7 @@ jobs:
           find . -mindepth 1 -maxdepth 1 ! -name .git ! -name .github ! -name source -exec rm -rf {} +
           cp -R source/. .
           rm -rf source
-          cat > index.html <<'EOF'
-          <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="0;url=admin-dashboard.html"><title>CREDENCE Admin</title><script>location.replace('admin-dashboard.html');</script></head><body><p>Opening CREDENCE Admin… <a href="admin-dashboard.html">Continue</a></p></body></html>
-          EOF
+          cp /tmp/credence-admin-index.html index.html
           rm -f admin.html admin.js app.js app-auth-fix.js auth-bridge.js certificates.js checkout.js learning.js notifications.js orders.js profile-settings.js profile.html quiz.html quiz.js smoke-test.html support.html support.js
       - name: Commit synced files
         run: |
